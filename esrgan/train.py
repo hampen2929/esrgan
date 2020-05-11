@@ -119,11 +119,10 @@ def main(opt):
     #  Training
     # ----------
 
-    for epoch in range(opt.epoch, opt.n_epochs + 1):
-        for batch_num, imgs in enumerate(train_dataloader, 1):
-
+    for epoch in range(opt.epoch + 1, opt.n_epochs + 1):
+        for batch_num, imgs in enumerate(train_dataloader):
             batches_done = (epoch - 1) * len(train_dataloader) + batch_num
-
+            
             # Configure model input
             imgs_lr = Variable(imgs["lr"].type(Tensor))
             imgs_hr = Variable(imgs["hr"].type(Tensor))
@@ -154,6 +153,34 @@ def main(opt):
                 sys.stdout.flush()
 
                 mlflow.log_metric('train_{}'.format('loss_pixel'), loss_pixel.item(), step=batches_done)
+                if batches_done % opt.sample_interval == 0:
+                    with torch.no_grad():
+                        for i, imgs in enumerate(valid_dataloader):
+                            # Save image grid with upsampled inputs and outputs
+                            imgs_lr = Variable(imgs["lr"].type(Tensor))
+                            gen_hr = generator(imgs_lr)
+                            imgs_lr = nn.functional.interpolate(imgs_lr, scale_factor=4)
+                            
+                            imgs_lr = denormalize(imgs_lr)
+                            gen_hr = denormalize(gen_hr)
+
+                            image_batch_save_dir = osp.join(image_valid_save_dir, '{:07}'.format(batches_done))
+                            os.makedirs(osp.join(image_batch_save_dir, "lr_image"), exist_ok=True)
+                            os.makedirs(osp.join(image_batch_save_dir, "hr_image"), exist_ok=True)
+
+                            save_image(imgs_lr, osp.join(image_batch_save_dir, "lr_image", "{:09}.png".format(i)), nrow=1, normalize=False)
+                            save_image(gen_hr, osp.join(image_batch_save_dir, "hr_image", "{:09}.png".format(i)), nrow=1, normalize=False)
+
+                            # # if i == 1:
+                            # #     sys.stdout.write("\n{}/{}".format(i, len(test_dataloader)))
+                            # # else:
+                            # #     sys.stdout.write("\r{}/{}".format(i, len(test_dataloader)))
+
+                            # sys.stdout.flush()
+
+                            if i > 5:
+                                break
+
                 continue
             
             # Extract validity predictions from discriminator
@@ -216,12 +243,16 @@ def main(opt):
 
             sys.stdout.flush()
 
-            
+            # import pdb; pdb.set_trace()
+
             if batches_done % opt.sample_interval == 0:
                 # Save image grid with upsampled inputs and ESRGAN outputs
                 imgs_lr = nn.functional.interpolate(imgs_lr, scale_factor=4)
                 img_grid = denormalize(torch.cat((imgs_lr, gen_hr), -1))
-                save_image(img_grid, osp.join(image_train_save_dir, "%d.png" % batches_done), nrow=1, normalize=False)
+
+                image_batch_save_dir = osp.join(image_train_save_dir, '{:07}'.format(batches_done))
+                os.makedirs(osp.join(image_batch_save_dir, "hr_image"), exist_ok=True)
+                save_image(img_grid, osp.join(image_batch_save_dir, "hr_image", "%d.png" % batches_done), nrow=1, normalize=False)
 
             # # if batches_done % opt.sample_interval == 0:
             # if batches_done % opt.sample_interval == 0:
