@@ -49,8 +49,8 @@ def build_argparser():
     parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
     parser.add_argument("--decay_epoch", type=int, default=100, help="epoch from which to start lr decay")
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
-    parser.add_argument("--hr_height", type=int, default=256, help="high res. image height")
-    parser.add_argument("--hr_width", type=int, default=256, help="high res. image width")
+    parser.add_argument("--hr_height", type=int, default=160, help="high res. image height")
+    parser.add_argument("--hr_width", type=int, default=160, help="high res. image width")
     parser.add_argument("--channels", type=int, default=3, help="number of image channels")
     parser.add_argument("--sample_interval", type=int, default=100, help="interval between saving image samples")
     parser.add_argument("--checkpoint_interval", type=int, default=5000, help="batch interval between model checkpoints")
@@ -112,7 +112,7 @@ def main(opt):
         ImageDataset(osp.join(input_dir, '{}_valid'.format(opt.dataset_name)), hr_shape=hr_shape),
         batch_size=opt.batch_size,
         shuffle=False,
-        num_workers=opt.n_cpu,
+        num_workers=opt.n_cpu, 
     )
 
     # ----------
