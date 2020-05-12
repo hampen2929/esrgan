@@ -1,0 +1,125 @@
+抄録：超解像生成逆襲ネットワーク(SRGAN) [1]は、単一画像の超解像時にリアルなテクスチャを生成することができる画期的な研究である。超解像生成アドバーサリーネットワーク(SRGAN) [1]は、単一画像の超解像時にリアルなテクスチャを生成することができる画期的な研究である。しかし，幻覚化されたディテールは不快なアーチファクトを伴うことが多い．そこで本研究では、SRGANの3つの重要な要素であるネットワークアーキテクチャ、敵対的損失、知覚的損失を徹底的に研究し、それぞれを改善して拡張SRGAN(ESRGAN)を導出しています。特に、ネットワークの基本的な構成単位として、バッチ正規化を行わないResidual-in-Residual Dense Block(RRDB)を導入する。さらに、相対論的GAN[2]の考え方を借りて、識別器に絶対値ではなく相対的な実在性を予測させる。最後に，活性化前の特徴量を用いることで知覚損失を改善し，明るさの一貫性やテクスチャの回復をより強力に監視できるようにした．これらの改善により、提案されたESRGANはSRGANに比べて、よりリアルで自然なテクスチャで一貫して優れた視覚品質を実現し、PIRM2018-SR Challenge1[3]で第1位を獲得しました。コードは https://github.com/xinntao/ESRGAN から入手可能です。
+
+1 はじめに シングル画像超解像（SISR）は、低レベルビジョンの基本的な問題として、研究コミュニティやAI企業の間で注目度が高まっている。SISR は、単一の低解像度（LR）画像から高解像度（HR）画像を復元することを目的としている。Dongら[4]が提案したSRCNNの先駆的な研究以来、深層畳み込みニューラルネットワーク(CNN)のアプローチが盛んに発展してきた。様々なネットワークアーキテクチャ設計やトレーニング戦略により、SR性能、特にピーク信号対雑音比(PSNR)値が継続的に改善されてきた [5,6,7,1,8,9,10,11,12]。しかし、これらのPSNRを重視したアプローチでは、PSNRは人間の主観的な評価とは根本的に異なるため、十分な高周波数の詳細が得られないまま、過度に平滑化された結果が出力される傾向があります[1]。
+
+図1: SRGAN2, 提案ESRGANとグランドトゥルースの超解像結果。ESRGANはSRGANよりもシャープネスとディテールの点で優れています。
+
+SR結果の視覚的品質を向上させるために、いくつかの知覚駆動手法が提案されています。例えば、知覚損失[13,14]は、ピクセル空間ではなく特徴空間で超解像モデルを最適化するために提案されている。1,16]では、より自然な画像に似た解が得られるようにネットワークに働きかけるために、生成的敵対的ネットワーク[15]がSRに導入されている。意味的画像優先順位は、回復されたテクスチャの詳細を改善するためにさらに組み込まれている[17]。視覚的に喜ばれる結果を追求するためのマイルストーンの一つがSRGANである[1]。基本モデルは残差ブロック[18]を用いて構築され、GANフレームワークで知覚損失を用いて最適化されている。SRGANはこれらの手法を用いて、PSNRを重視した手法と比較して、再構成の全体的な視覚的品質を大幅に向上させることができます。しかし、図1に示すように、SRGANの結果とGT（ground-truth）画像との間にはまだ明確なギャップが存在する。本研究では、SRGANの主要な構成要素を再検討し、3つの側面からモデルを改良しました。まず、ネットワーク構造を改善するために、より大容量で学習しやすいRDDB(Residual-in-Residual Dense Block)を導入する。また、[20]のようにバッチ正規化(BN) [19]層を削除し、非常に深いネットワークの学習を容易にするために、残差スケーリング[21,20]とより小さな初期化を用いる。第二に，相対論的平均GAN (RaGAN) [2]を用いて識別器を改良し，「一方の画像が本物か偽物か」ではなく「一方の画像が他方の画像よりも現実的か」を判断するように学習する．我々の実験では，この改良により，より現実的なテクスチャの詳細を回復することができることを示した．第三に、SRGANのように活性化後ではなく活性化前にVGG特徴を用いることで、知覚損失を改善することを提案する。我々は経験的に、知覚損失を調整することで、セクション4.4で示されるように、エッジがよりシャープになり、より視覚的に喜ばしい結果が得られることを発見した。広範な実験により、強化されたSRGAN（ESRGANと呼ばれる）は、シャープネスとディテールの両方において、一貫して最先端の手法を上回ることが示されている（図1と図7を参照）。
+
+図2: PIRM自己検証データセット上の知覚歪曲面。EDSR [20]、RCAN [12]、EnhanceNet [16]のベースラインと、提出されたESRGANモデルを示す。青い点は画像補間によって生成されたものです。
+
+PIRM-SRチャレンジ[3]に参加するためにESRGANの変形を取る。このチャレンジは、歪みと知覚品質が相反すると主張する[22]をもとに、知覚品質を意識した形で性能を評価する初めてのSR競技である。知覚品質はMaのスコア[23]とNIQE[24]の非参照尺度、すなわち知覚指数=1 2 ((10-Ma)+NIQE)で判定される。知覚指数が低いほど知覚の質が良いことを表している。
+
+図２に示すように、知覚歪曲面は、ＲＭＳＥ（Root-Mean-Square Error）のしきい値で定義された３つの領域に分けられ、各領域で最も低い知覚指数を達成したアルゴリズムが地域チャンピオンとなる。ここでは、主に第3領域を中心に、知覚品質の向上を目指しています。前述した改良と、4.6節で説明したその他の調整の結果、提案したESRGANは、PIRM-SRチャレンジ（リージョン3）で最高の知覚指数を獲得し、第1位を獲得しました。
+
+2 関連作業
+本研究では、SR問題を解決するためのディープニューラルネットワークのアプローチに注目している。先駆的な研究として，Dongら[4,25]は，LR画像からHR画像へのマッピングをエンドツーエンドで学習するSRCNNを提案し，従来の研究と比較して優れた性能を達成している．その後，残差学習付き深層ネットワーク[5]，ラプラシアンピラミッド構造[6]，残差ブロック[1]，再帰的学習[7,8]，密接続ネットワーク[9]，深層逆投影[10]，残差密ネットワーク[11]など，様々なネットワークアーキテクチャが登場している．具体的には、Limら[20]は残差ブロック内の不要なBN層を除去し、モデルサイズを拡大することでEDSRモデルを提案し、大幅な改善を実現している。Zhangら[11]はSRに効果的な残差密ブロックを用いることを提案しており，さらにチャネルアテンションを用いたより深いネットワークを探求している[12]．教師付き学習以外にも、一般的な画像復元問題を解決するために、強化学習[26]や教師なし学習[27]のような手法も導入されている。
+
+非常に深いモデルの学習を安定化させるために，いくつかの手法が提案されている．例えば，学習を安定化して性能を向上させるために残差パスが開発されている[18,5,12]．残差スケーリングはSzegedyら[21]によって最初に採用され，EDSRでも使用されている．一般的な深層ネットワークについては、Heら[28]がBNのないVGGスタイルのネットワークのためのロバストな初期化法を提案している。深層ネットワークの訓練を容易にするために，コンパクトで効果的な残差内密ブロックを開発しており，これは知覚品質の向上にも役立つ．
+
+文献を通して、フォトリアリズムは通常、GANを用いた敵対的訓練によって達成される[15]。最近では，より効果的なGANフレームワークの開発に焦点を当てた研究が数多く行われている．WGAN [31] は，Wasserstein距離の合理的かつ効率的な近似値を最小化することを提案し，重みクリッピングによる識別器の正則化を行っている．他の改良された正則化には、勾配クリッピング [32] やスペクトル正規化 [33] などがある。相対論的判別器[2]は、生成されたデータが実データである確率を高めるだけでなく、同時に実データが実データである確率を下げるために開発されている。本研究では、より効果的な相対論的平均GANを採用することでSRGANを強化する。
+
+SRアルゴリズムは一般的に、PSNRやSSIMなどの広く使われている歪みの指標によって評価されます。しかし、これらの指標は、人間の観測者の主観的な評価とは根本的に異なるものである［１］。Maのスコア[23]やNIQE[24]などの非参照尺度が知覚品質評価に使用されており、これらはいずれもPIRM-SRチャレンジ[3]で知覚指数を計算するために使用されています。最近の研究では、Blauら[22]は、歪みと知覚品質が相反することを発見している。
+
+3 提案された方法
+我々の主な目的は、SRの全体的な知覚品質を向上させることである。本節では、まず提案したネットワークアーキテクチャについて説明し、次に識別器と知覚損失の改善について述べる。最後に、知覚品質とPSNRのバランスをとるためのネットワーク補間戦略について述べる。
+
+図3：SRResNet[1]の基本アーキテクチャを採用しており、ほとんどの計算はLR特徴空間で行われる。基本ブロック（残差ブロック[18]、密ブロック[34]、RRDBなど）を選択したり、設計したりすることで、より良い性能を得ることができる。
+
+3.1 ネットワークアーキテクチャ
+SRGANの回復画質をさらに向上させるために、主に2つの修正を行う：1)すべてのBN層を削除する、2)図4に示すような多値残差ネットワークと密な接続を組み合わせた提案されたRRDB(Residual-in-Residual Dense Block)に元の基本ブロックを置き換える、というものである。
+
+図4：左：SRGANでは残差ブロック内のBN層を除去している。右：SRGANの残差ブロックのBN層を除去している。RRDBブロックは我々の深層モデルに使用され、βは残差スケーリングパラメータである。
+
+BN層を削除することで、SR [20] やデブリ ング [35] などのPSNR指向のさまざまなタスクで性能が向上し、計算の複雑さが軽減されることが証明されています。BN層は、学習中にバッチ内の平均と分散を用いて特徴量を正規化し、テスト中には学習データセット全体の推定平均と分散を用います。学習データセットとテストデータセットの統計量が大きく異なる場合，BN層は不快なアーチファクトを導入し，一般化能力を制限する傾向がある．我々は経験的に、ネットワークがより深く、GANフレームワークの下で訓練されている場合、BN層はより多くのアーチファクトをもたらす可能性があることを観察した。これらのアーチファクトは、反復や異なる設定の間で時折現れ、訓練期間中の安定した性能の必要性に反している。そこで、安定した学習と安定した性能を実現するために、BN層を除去する。さらに、BN層を除去することで、一般化能力を向上させ、計算の複雑さとメモリ使用量を削減することができる。
+
+SRGANのハイレベルなアーキテクチャ設計（図3参照）はそのままに、図4に示すように、新しい基本ブロックであるRRDBを使用する。提案したRRDBは、層数や接続数を増やすことで性能が向上するという観測[20,11,12]に基づいて、SRGANのオリジナルの残差ブロックよりも深く複雑な構造を採用している。具体的には、図4に示すように、提案するRRDBは残差-in-残差構造を採用しており、残差学習を異なるレベルで利用している。同様のネットワーク構造は、[36]で提案されており、同様に多レベル残差ネットワークを適用している。しかし、提案するRRDBが[36]と異なるのは、[11]と同様にメインパスに密なブロック[34]を用いている点であり、密な接続の恩恵を受けてネットワーク容量が大きくなる。改良されたアーキテクチャに加えて、我々は非常に深いネットワークの学習を容易にするためにいくつかの技術を利用している。1) 残差スケーリング [21,20]、すなわち、不安定性を防ぐために、メインパスに追加する前に0と1の間の定数を掛けて残差をスケーリングします。詳細は補足資料に記載されています。訓練の詳細と提案したネットワークの有効性については、第4節で紹介します。
+
+3.2 相対論的判別器 生成器の構造を改良したほかに、相対論的GAN[2]に基づいた判別器を強化した。SRGAN の標準的な判別器 D は、入力画像 x が本物で自然である確率を推定するのとは異なり、相対論的判別器は、図 5 に示すように、本物の画像 xr が偽物の画像 xf よりも相対的に現実的である確率を予測しようとする。
+
+図５：標準的な判別器と相対的な判別器の違い。
+
+具体的には、標準判別器を相対論的平均判別器RaD[2]に置き換え、DRaと呼ぶ。SRGANにおける標準判別器は、D(x) = σ(C(x))と表すことができ、σはシグモイド関数、C(x)は非変換判別器出力である。次に、RaDは、DRa(xr, xf ) = σ(C(xr) - Exf [C(xf )]として定式化され、ここで、Exf [-]は、ミニバッチ内のすべての偽データの平均を取る操作を表す。そして、判別器損失は次のように定義される。
+
+ここで、xf = G(xi)、xiは入力LR画像を表す。ジェネレータの逆問題損失には、xr と xf の両方が含まれていることがわかる。したがって、SRGANでは生成データと実データの両方の勾配の恩恵を受けるが、SRGANでは生成部分のみが影響を受ける。4.4.4 節では、この識別器の変更が、よりシャープなエッジとより詳細なテクスチャの学習に役立つことを示す。
+
+3.3 知覚的損失 SRGAN のように活性化後ではなく活性化前に特徴量を制約することで、より効果的な知覚的損失 Lpercep を開発した。知覚的類似性に近いという考えに基づいて、Johnsonら[29,14]は知覚損失を提案しており、SRGAN[1]ではこれを拡張したものとなっている。知覚的損失は、事前に訓練されたディープネットワークの活性化層で定義されており、活性化された2つの特徴間の距離が最小化されている。この慣習に反して、我々は活性化層の前に特徴を使用することを提案する。第一に、活性化された特徴は、図６に示されているように、特に非常に深いネットワークの後では、非常に疎である。例えば、VGG19-543層の後の画像「ヒヒ」の活性化ニューロンの平均割合は、わずか11.17％である。このように、活性化が疎かになると、監視が弱くなり、性能が低下することがわかる。第二に、活性化後に特徴量を使用すると、地上の真実画像と比較して再構成された明るさに一貫性がなく、それがSec.4.4で示される。したがって、ジェネレーターの総損失は以下のようになります。
+
+LG = Lpercep + λLRaG + ηL1,
+
+ここで、L1 = Exi ||G(xi) - y||1は、回復画像G(xi)と基底真実yとの間の1ノルム距離を評価する内容損失であり、λ、ηは、異なる損失項のバランスをとるための係数である。また、ＰＩＲＭ-ＳＲチャレンジでは、知覚損失の変種を探索する。画像分類のために訓練されたVGGネットワークを採用する一般的な知覚損失とは対照的に、SRのためのより適切な知覚損失-MINC損失を開発する。これは、物体認識のために微調整されたVGGネットワーク[38]をベースにしており、物体ではなくテクスチャに焦点を当てています。MINC損失がもたらす知覚指数の向上はわずかであるが，SRではテクスチャに焦点を当てた知覚損失の探索が重要であると考えられる．
+
+図6: 画像「ヒヒ」の活性化前後の代表的な特徴マップ。ネットワークが深くなるにつれて、活性化前の特徴はより多くの情報を含んでいるのに対し、活性化後の特徴はほとんどが非活性化となっています。
+
+3.4 ネットワーク
+補間 GANベースの手法における不快なノイズを除去しつつ、良好な知覚品質を維持するために、柔軟で効果的な手法であるネットワーク補間を提案する。具体的には、まずPSNR指向のネットワークGPSNRを学習し、次に微調整を行うことでGANベースのネットワークGGANを得る。これら2つのネットワークの対応するパラメータをすべて補間して補間モデルGINTERPを導出する。
+
+ここで、θ INTERP G, θ PSNR G, θ GAN GはそれぞれGINTERP, GPSNR, GGANのパラメータであり、α ∈[0, 1]は補間パラメータである。提案するネットワーク補間には2つの利点がある。第一に、補間されたモデルは、アーチファクトを導入することなく、どのような実現可能なαに対しても意味のある結果を得ることができる。第二に、モデルを再訓練することなく、知覚品質と忠実度のバランスを継続的にとることができる。また、PSNR指向の手法とGANベースの手法の効果のバランスをとるための代替手法も模索している。例えば、ネットワークパラメータではなく、それらの出力画像を直接（ピクセル単位で）補間することができる。しかし、このような方法では、ノイズとぼやけのトレードオフがうまくいかず、補間された画像はぼやけすぎたり、ノイズが多くてアーチファクトが発生したりします（4.5節参照）。もう一つの方法は、コンテンツ損失と敵対的損失の重み、すなわち、式(3)のパラメータλとηを調整することである。しかし、この方法は、損失重みのチューニングとネットワークの微調整を必要とするため、画像スタイルの連続的な制御を実現するにはコストがかかりすぎる。
+
+4つの実験
+4.1 トレーニングの詳細
+SRGAN [1]に従い、すべての実験はスケーリング係数 LR画像とHR画像の間には4×4が存在する。HR画像をMATLABのバイキュービックカーネル関数を用いてダウンサンプリングしてLR画像を得る。ミニバッチサイズは16とした。クロップされたHRパッチの空間サイズは128×128である。これにより、より深いネットワークを学習すると、パッチサイズが大きくなることで、より多くの意味情報を捉えることができるようになります。しかし、この場合、学習時間が長くなり、計算資源の消費量も多くなる。この現象はPSNR指向の手法にも見られる（補足資料参照）。訓練プロセスは2つの段階に分けられる。まず、PSNR指向モデルをL1損失で学習する。学習率は2×10-4として初期化し、2×105のミニバッチ更新ごとに2の係数で減衰させます。次に、学習されたPSNR指向モデルを生成器の初期化として採用する。(3)の損失関数を用いて、λ = 5×10-3、η = 1×10-2 の条件で学習を行う。学習率は 1×10-4 とし、[50k, 100k, 200k, 300k] 回の反復で半減する。画素単位の損失を用いた事前学習を行うことで，GAN ベースの手法はより視覚的に好ましい結果を得ることができる．その理由は、1) ジェネレータの望ましくない局所的なオプティマを回避できるからです。最適化には、Adam [39]を用い、β1 = 0.9, β2 = 0.999とした。モデルが収束するまで、生成器と判別器ネットワークを交互に更新します。ジェネレータには2つの設定を使用しています。1つはSRGANと同様の容量を持つ16個の残差ブロックを含むもので、もう1つは23個のRRDBブロックを持つより深いモデルです。我々はPyTorchフレームワークを用いてモデルを実装し、NVIDIA Titan Xp GPUを用いてトレーニングを行います。
+
+4.2 データ 学習には、主にDIV2Kデータセット[40]を使用する。800枚の画像を含むDIV2Kのトレーニングセットの他にも、豊富で多様なテクスチャを持つ他のデータセットを探してトレーニングを行う。この目的のために、Flickrウェブサイト上で収集された2650枚の2K高解像度画像からなるFlickr2Kデータセット[41]と、トレーニングセットを充実させるためにOutdoorSceneTraining (OST)データセット[17]をさらに使用しました。図 8 に示すように、この大規模なデータセットをよりリッチなテクスチャで使用することで、より自然な結果が得られることを経験的に確認した。我々は、RGBチャンネルでモデルを学習し、ランダムな水平反転と90度回転で学習データセットを増強した。我々は、広く使われているベンチマークデータセットであるSet5 [42]、Set14 [43]、BSD100 [44]、Urban100 [45]、およびPIRM-SRチャレンジで提供されているPIRM自己検証データセットで我々のモデルを評価した。
+
+4.3 Qualitative Results We compare our final models on several public benchmark datasets with state-ofthe-art PSNR-oriented methods including SRCNN [4], EDSR [20] and RCAN [12], and also with perceptual-driven approaches including SRGAN [1] and EnhanceNet[16]. Since there is no effective and standard metric for perceptual quality, we present some representative qualitative results in Fig. 7. PSNR (evaluated on the luminance channel in YCbCr color space) and the perceptual index used in the PIRM-SR Challenge are also provided for reference.
+
+Fig. 7: Qualitative results of ESRGAN. ESRGAN produces more natural textures, e.g., animal fur, building structure and grass texture, and also less unpleasant artifacts, e.g., artifacts in the face by SRGAN.
+
+図7から、我々が提案したESRGANは、シャープネスとディテールの両方において、従来の手法よりも優れていることがわかります。例えば、PSNRを重視した手法ではぼやけた結果になりがちなヒゲや草のテクスチャ（画像43074参照）や、従来のGANベースの手法ではテクスチャが不自然で不愉快なノイズを含んでいたのに対し、ESRGANではよりシャープで自然なヒゲや草のテクスチャを生成することができます。ESRGANは、他の手法では十分な詳細を生成できなかったり（SRGAN）、望ましくないテクスチャを追加したり（EnhanceNet）しているのに対し、ESRGANは建物のより詳細な構造を生成することができます（画像102061参照）。さらに、従来のGANベースの手法では、SRGANでは顔にしわが追加されるなど、不快なアーチファクトが発生することがありました。私たちのESRGANはこれらのアーチファクトを取り除き、自然な結果を生み出します。
+
+4.4 アブレーションの検討 提案されたESRGANの各成分の効果を検討するために、ベースラインのSRGANモデルを段階的に修正し、それらの違いを比較する。全体的な視覚的な比較を図8に示す。各列はモデルを表し、その構成を上に示している。赤色の符号は、前のモデルと比較した主な改善点を示している。以下、詳細な議論を行う。
+
+ＢＮの除去 
+ アーティファクトのない安定した性能を実現するために、まずすべてのBN層を除去します。これは性能を低下させないが、計算資源とメモリ使用量を節約する。いくつかのケースでは、図８の２列目と３列目から若干の改善が観察される（例えば、画像３９）。さらに、ネットワークがより深く複雑な場合、BN層を持つモデルは不快なアーチファクトを導入する可能性が高いことが観察されます。例は補足資料に記載されている。
+
+知覚喪失における活性化前 
+ 我々はまず、活性化前の特徴を使用することで、再構成画像のより正確な明るさが得られることを実証する。テクスチャおよび色の影響を排除するために、画像をガウスカーネルでフィルタリングし、そのグレースケール対応のヒストグラムをプロットする。図9aは、各輝度値の分布を示しています。有効化された特徴量を使用すると、分布が左に傾き、結果として出力が暗くなりますが、有効化前の特徴量を使用すると、より正確な輝度分布がグランドトゥルースに近い分布になります。さらに、図9b（鳥の羽を参照）や図8（3列目と4列目を参照）に示されるように、活性化前の特徴を使用することで、よりシャープなエッジとリッチなテクスチャを生成するのに役立つことを観察することができます。
+
+RaGAN。
+RaGANは、改良された相対的識別器を使用しており、これは、よりシャープなエッジおよびより詳細なテクスチャの学習に有益であることが示されている。例えば、図８の５列目では、生成された画像は、左の画像よりもより鮮明で、より豊かなテクスチャを持っている（ヒヒ、画像３９、画像４３０７４を参照）。RRDBを用いたより深いネットワーク 提案したRRDBを用いたより深いモデルは、特に図８の画像６の屋根のような規則的な構造の場合、意味情報を捉える表現力が強いため、復元されたテクスチャをさらに向上させることができる。また、図８の画像２０のような不快なノイズも、深層モデルを用いることで低減できることがわかった。深層モデルの学習がますます困難になっていると主張したSRGANとは対照的に、我々の深層モデルは、上記の改良、特にBN層を持たないRRDBの提案により、容易に学習できる優れた性能を示している。
+
+図8：ESRGANにおける各コンポーネントの効果を示すための全体的な視覚的比較。各列はモデルを表し、その構成を上に示している。赤色の符号は、前のモデルと比較して主な改善点を示しています。
+
+4.5 ネットワーク補間
+PSNR指向モデルとGANベースの手法の結果のバランスをとるために、ネットワーク補間と画像補間戦略の効果を比較する。両方式に対して単純な線形補間を適用する。補間パラメータαは0から1の間で0.2の間隔で選択される。図10に示すように、純粋なGANベースの手法では、シャープなエッジと豊かなテクスチャが得られるが、不快なアーチファクトがあるのに対し、純粋なPSNR指向の手法では、カートゥーン風のぼやけた画像が得られる。ネットワーク補間を採用することで、不快なアーチファクトは減少し、テクスチャは維持されます。対照的に、画像補間では、これらのアーチファクトを効果的に除去することはできませんでした。興味深いことに、図１０では、ネットワーク補間戦略が知覚品質と忠実度のバランスを滑らかに制御していることが観察される。
+
+4.6 PIRM-SRの挑戦
+我々はPIRM-SRチャレンジ[3]に参加するためにESRGANを変形したものを使用しています。具体的には、16ブロックの残差ブロックを持つ提案ESRGANを使用し、経験的に知覚指数に対応するためにいくつかの修正を加えています。1) Sec.3.3で説明したように、MINC損失は知覚損失の変形として使用されます。3.3.3節で述べたように、MINC損失を用いた知覚損失の変化形を用いているが、知覚指数の差はあっても、質感に着目した知覚損失の探索はSRにとって重要であると考える。2)知覚指数の学習に用いたPristineデータセット[24]を用いていること、3)PSNRの制約から損失L1の重みをη=10まで高くしていること、4)後処理としてバックプロジェクション[46]を用いていること、これはPSNRを改善し、知覚指数を下げることができる。より高いPSNRを必要とする他の領域1と2については、我々のESRGANの結果とPSNR指向の手法RCAN [12]の結果との間の画像補間を使用しています。画像補間スキームでは、ネットワーク補間スキームを使用した方が視覚的に見やすい結果が得られたものの、知覚指数は低い方が良いという結果になりました（低い方が良い）。提案したESRGANモデルは、PIRM-SRチャレンジ（リージョン3）において、最高の知覚指数で第1位を獲得した。
+
+図10：ネットワーク補間と画像補間の比較
+
+5 おわりに 我々は、従来のSR手法よりも一貫して優れた知覚品質を達成するESRGANモデルを発表した。この手法は、PIRM-SRチャレンジにおいて、知覚指数の点で第1位を獲得した。我々は、BN層を持たない複数のRDDBブロックを含む新しいアーキテクチャを構築した。さらに、提案されたディープモデルの学習を容易にするために、残差スケーリングやより小さな初期化を含む有用な技術を採用した。また，識別器として相対論的GANを導入し，ある画像が他の画像よりも現実的かどうかを判断することで，より詳細なテクスチャを回復するように生成器を誘導する．さらに、活性化前の特徴量を利用することで知覚損失を改善し、より強い監視機能を提供することで、より正確な明るさとリアルなテクスチャを復元することができました。
+
+謝辞。この作品は、SenseTime Group Limited、香港SAR（CUHK 14241716、14224316.14209217）、中国国立自然科学財団（U1613211）と深セン研究プログラム（JCYJ20170818164704758、JCYJ20150925163005055）の研究助成を受けた一般的な研究基金によってサポートされています。
+
+
+
+
+
+
+
+
+
+We take a variant of ESRGAN to participate in the PIRM-SR Challenge [3]. This challenge is the first SR competition that evaluates the performance in a perceptual-quality aware manner based on [22], where the authors claim that distortion and perceptual quality are at odds with each other. The perceptual quality is judged by the non-reference measures of Ma’s score [23] and NIQE [24], i.e., perceptual index = 1 2 ((10−Ma)+NIQE). A lower perceptual index represents a better perceptual quality.
+
+As shown in Fig. 2, the perception-distortion plane is divided into three regions defined by thresholds on the Root-Mean-Square Error (RMSE), and the algorithm that achieves the lowest perceptual index in each region becomes the regional champion. We mainly focus on region 3 as we aim to bring the perceptual quality to a new high. Thanks to the aforementioned improvements and some other adjustments as discussed in Sec. 4.6, our proposed ESRGAN won the first place in the PIRM-SR Challenge (region 3) with the best perceptual index.
+
+2 Related Work
+We focus on deep neural network approaches to solve the SR problem. As a pioneer work, Dong et al. [4,25] propose SRCNN to learn the mapping from LR to HR images in an end-to-end manner, achieving superior performance against previous works. Later on, the field has witnessed a variety of network architectures, such as a deeper network with residual learning [5], Laplacian pyramid structure [6], residual blocks [1], recursive learning [7,8], densely connected network [9], deep back projection [10] and residual dense network [11]. Specifically, Lim et al. [20] propose EDSR model by removing unnecessary BN layers in the residual block and expanding the model size, which achieves significant improvement. Zhang et al. [11] propose to use effective residual dense block in SR, and they further explore a deeper network with channel attention [12], achieving the state-of-the-art PSNR performance. Besides supervised learning, other methods like reinforcement learning [26] and unsupervised learning [27] are also introduced to solve general image restoration problems.
+
+Several methods have been proposed to stabilize training a very deep model. For instance, residual path is developed to stabilize the training and improve the performance [18,5,12]. Residual scaling is first employed by Szegedy et al. [21] and also used in EDSR. For general deep networks, He et al. [28] propose a robust initialization method for VGG-style networks without BN. To facilitate training a deeper network, we develop a compact and effective residual-in-residual dense block, which also helps to improve the perceptual quality.
+
+Throughout the literature, photo-realism is usually attained by adversarial training with GAN [15]. Recently there are a bunch of works that focus on developing more effective GAN frameworks. WGAN [31] proposes to minimize a reasonable and efficient approximation of Wasserstein distance and regularizes discriminator by weight clipping. Other improved regularization for discriminator includes gradient clipping [32] and spectral normalization [33]. Relativistic discriminator [2] is developed not only to increase the probability that generated data are real, but also to simultaneously decrease the probability that real data are real. In this work, we enhance SRGAN by employing a more effective relativistic average GAN.
+
+SR algorithms are typically evaluated by several widely used distortion measures, e.g., PSNR and SSIM. However, these metrics fundamentally disagree with the subjective evaluation of human observers [1]. Non-reference measures are used for perceptual quality evaluation, including Ma’s score [23] and NIQE [24], both of which are used to calculate the perceptual index in the PIRM-SR Challenge [3]. In a recent study, Blau et al. [22] find that the distortion and perceptual quality are at odds with each other.
+
+3 Proposed Methods
+Our main aim is to improve the overall perceptual quality for SR. In this section, we first describe our proposed network architecture and then discuss the improvements from the discriminator and perceptual loss. At last, we describe the network interpolation strategy for balancing perceptual quality and PSNR.
+
+Fig. 3: We employ the basic architecture of SRResNet [1], where most computation is done in the LR feature space. We could select or design “basic blocks” (e.g., residual block [18], dense block [34], RRDB) for better performance.
+
+3.1 Network Architecture
+In order to further improve the recovered image quality of SRGAN, we mainly make two modifications to the structure of generator G: 1) remove all BN layers; 2) replace the original basic block with the proposed Residual-in-Residual Dense Block (RRDB), which combines multi-level residual network and dense connections as depicted in Fig. 4.
+
+Fig. 4: Left: We remove the BN layers in residual block in SRGAN. Right: RRDB block is used in our deeper model and β is the residual scaling parameter.
