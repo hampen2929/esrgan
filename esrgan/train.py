@@ -100,7 +100,7 @@ def main(opt):
 
     # dataloader
     train_data_path = osp.join(input_dir, '{}_train'.format(opt.dataset_name))
-    print(train_data_path)
+    
     train_dataloader = DataLoader(
         ImageDataset(train_data_path, hr_shape=hr_shape),
         batch_size=opt.batch_size,
@@ -108,11 +108,12 @@ def main(opt):
         num_workers=opt.n_cpu,
     )
 
-    valid_dataloader = DataLoader(
-        ImageDataset(osp.join(input_dir, '{}_valid'.format(opt.dataset_name)), hr_shape=hr_shape),
+    test_data_path = osp.join(input_dir, '{}_test'.format(opt.dataset_name))
+    test_dataloader = DataLoader(
+        ImageDataset(test_data_path, hr_shape=hr_shape),
         batch_size=opt.batch_size,
         shuffle=False,
-        num_workers=opt.n_cpu, 
+        num_workers=opt.n_cpu,
     )
 
     # ----------
@@ -153,98 +154,76 @@ def main(opt):
                 sys.stdout.flush()
 
                 mlflow.log_metric('train_{}'.format('loss_pixel'), loss_pixel.item(), step=batches_done)
-                if batches_done % opt.sample_interval == 0:
-                    with torch.no_grad():
-                        for i, imgs in enumerate(valid_dataloader):
-                            # Save image grid with upsampled inputs and outputs
-                            imgs_lr = Variable(imgs["lr"].type(Tensor))
-                            gen_hr = generator(imgs_lr)
-                            imgs_lr = nn.functional.interpolate(imgs_lr, scale_factor=4)
-                            
-                            imgs_lr = denormalize(imgs_lr)
-                            gen_hr = denormalize(gen_hr)
-
-                            image_batch_save_dir = osp.join(image_valid_save_dir, '{:07}'.format(batches_done))
-                            os.makedirs(osp.join(image_batch_save_dir, "lr_image"), exist_ok=True)
-                            os.makedirs(osp.join(image_batch_save_dir, "hr_image"), exist_ok=True)
-
-                            save_image(imgs_lr, osp.join(image_batch_save_dir, "lr_image", "{:09}.png".format(i)), nrow=1, normalize=False)
-                            save_image(gen_hr, osp.join(image_batch_save_dir, "hr_image", "{:09}.png".format(i)), nrow=1, normalize=False)
-
-                            # # if i == 1:
-                            # #     sys.stdout.write("\n{}/{}".format(i, len(test_dataloader)))
-                            # # else:
-                            # #     sys.stdout.write("\r{}/{}".format(i, len(test_dataloader)))
-
-                            # sys.stdout.flush()
-
-                            if i > 5:
-                                break
-
-                continue
-            
-            # Extract validity predictions from discriminator
-            pred_real = discriminator(imgs_hr).detach()
-            pred_fake = discriminator(gen_hr)
-
-            # Adversarial loss (relativistic average GAN)
-            loss_GAN = criterion_GAN(pred_fake - pred_real.mean(0, keepdim=True), valid)
-
-            # Content loss
-            gen_features = feature_extractor(gen_hr)
-            real_features = feature_extractor(imgs_hr).detach()
-            loss_content = criterion_content(gen_features, real_features)
-
-            # Total generator loss
-            loss_G = loss_content + opt.lambda_adv * loss_GAN + opt.lambda_pixel * loss_pixel
-
-            loss_G.backward()
-            optimizer_G.step()
-
-            # ---------------------
-            #  Train Discriminator
-            # ---------------------
-
-            optimizer_D.zero_grad()
-
-            pred_real = discriminator(imgs_hr)
-            pred_fake = discriminator(gen_hr.detach())
-
-            # Adversarial loss for real and fake images (relativistic average GAN)
-            loss_real = criterion_GAN(pred_real - pred_fake.mean(0, keepdim=True), valid)
-            loss_fake = criterion_GAN(pred_fake - pred_real.mean(0, keepdim=True), fake)
-
-            # Total loss
-            loss_D = (loss_real + loss_fake) / 2
-
-            loss_D.backward()
-            optimizer_D.step()
-
-            # --------------
-            #  Log Progress
-            # --------------                    
-
-            log_info = "[Epoch {}/{}] [Batch {}/{}] [D loss: {}] [G loss: {}, content: {}, adv: {}, pixel: {}]".format(
-                    epoch,
-                    opt.n_epochs,
-                    batch_num,
-                    len(train_dataloader),
-                    loss_D.item(),
-                    loss_G.item(),
-                    loss_content.item(),
-                    loss_GAN.item(),
-                    loss_pixel.item(),
-                )
                 
-            if batch_num == 1:
-                sys.stdout.write("\n{}".format(log_info))
             else:
-                sys.stdout.write("\r{}".format(log_info))
+                # Extract validity predictions from discriminator
+                pred_real = discriminator(imgs_hr).detach()
+                pred_fake = discriminator(gen_hr)
 
-            sys.stdout.flush()
+                # Adversarial loss (relativistic average GAN)
+                loss_GAN = criterion_GAN(pred_fake - pred_real.mean(0, keepdim=True), valid)
 
-            # import pdb; pdb.set_trace()
+                # Content loss
+                gen_features = feature_extractor(gen_hr)
+                real_features = feature_extractor(imgs_hr).detach()
+                loss_content = criterion_content(gen_features, real_features)
 
+                # Total generator loss
+                loss_G = loss_content + opt.lambda_adv * loss_GAN + opt.lambda_pixel * loss_pixel
+
+                loss_G.backward()
+                optimizer_G.step()
+
+                # ---------------------
+                #  Train Discriminator
+                # ---------------------
+
+                optimizer_D.zero_grad()
+
+                pred_real = discriminator(imgs_hr)
+                pred_fake = discriminator(gen_hr.detach())
+
+                # Adversarial loss for real and fake images (relativistic average GAN)
+                loss_real = criterion_GAN(pred_real - pred_fake.mean(0, keepdim=True), valid)
+                loss_fake = criterion_GAN(pred_fake - pred_real.mean(0, keepdim=True), fake)
+
+                # Total loss
+                loss_D = (loss_real + loss_fake) / 2
+
+                loss_D.backward()
+                optimizer_D.step()
+
+                # --------------
+                #  Log Progress
+                # --------------                    
+
+                log_info = "[Epoch {}/{}] [Batch {}/{}] [D loss: {}] [G loss: {}, content: {}, adv: {}, pixel: {}]".format(
+                        epoch,
+                        opt.n_epochs,
+                        batch_num,
+                        len(train_dataloader),
+                        loss_D.item(),
+                        loss_G.item(),
+                        loss_content.item(),
+                        loss_GAN.item(),
+                        loss_pixel.item(),
+                    )
+                    
+                if batch_num == 1:
+                    sys.stdout.write("\n{}".format(log_info))
+                else:
+                    sys.stdout.write("\r{}".format(log_info))
+
+                sys.stdout.flush()
+
+                # import pdb; pdb.set_trace()
+                mlflow.log_metric('train_{}'.format('loss_D'), loss_D.item(), step=batches_done)
+                mlflow.log_metric('train_{}'.format('loss_G'), loss_G.item(), step=batches_done)
+                mlflow.log_metric('train_{}'.format('loss_content'), loss_content.item(), step=batches_done)
+                mlflow.log_metric('train_{}'.format('loss_GAN'), loss_GAN.item(), step=batches_done)
+                mlflow.log_metric('train_{}'.format('loss_pixel'), loss_pixel.item(), step=batches_done)
+
+            
             if batches_done % opt.sample_interval == 0:
                 # Save image grid with upsampled inputs and ESRGAN outputs
                 imgs_lr = nn.functional.interpolate(imgs_lr, scale_factor=4)
@@ -254,10 +233,8 @@ def main(opt):
                 os.makedirs(osp.join(image_batch_save_dir, "hr_image"), exist_ok=True)
                 save_image(img_grid, osp.join(image_batch_save_dir, "hr_image", "%d.png" % batches_done), nrow=1, normalize=False)
 
-            # # if batches_done % opt.sample_interval == 0:
-            # if batches_done % opt.sample_interval == 0:
                 with torch.no_grad():
-                    for i, imgs in enumerate(valid_dataloader):
+                    for i, imgs in enumerate(test_dataloader):
                         # Save image grid with upsampled inputs and outputs
                         imgs_lr = Variable(imgs["lr"].type(Tensor))
                         gen_hr = generator(imgs_lr)
@@ -280,19 +257,14 @@ def main(opt):
 
                         # sys.stdout.flush()
 
-                        if i > 5:
+                        if i > 25:
                             break
 
             if batches_done % opt.checkpoint_interval == 0:            
                 # Save model checkpoints
-                torch.save(generator.state_dict(), osp.join(weight_save_dir, "generator_%d.pth" % epoch))
-                torch.save(discriminator.state_dict(), osp.join(weight_save_dir, "discriminator_%d.pth" % epoch))
+                torch.save(generator.state_dict(), osp.join(weight_save_dir, "generator_%d.pth" % batches_done))
+                torch.save(discriminator.state_dict(), osp.join(weight_save_dir, "discriminator_%d.pth" % batches_done))
 
-            mlflow.log_metric('train_{}'.format('loss_D'), loss_D.item(), step=batches_done)
-            mlflow.log_metric('train_{}'.format('loss_G'), loss_G.item(), step=batches_done)
-            mlflow.log_metric('train_{}'.format('loss_content'), loss_content.item(), step=batches_done)
-            mlflow.log_metric('train_{}'.format('loss_GAN'), loss_GAN.item(), step=batches_done)
-            mlflow.log_metric('train_{}'.format('loss_pixel'), loss_pixel.item(), step=batches_done)
 
 if __name__ == '__main__':
     opt = build_argparser()
