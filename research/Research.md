@@ -81,9 +81,20 @@ smaller initialization
 
 
 ## 参考
+
+### Paper
 - SRGAN: Training Dataset Matters[1]
 https://arxiv.org/pdf/1903.09922.pdf
 
+- ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks
+https://arxiv.org/abs/1809.00219
+
+- Residual Dense Network for Image Super-Resolution, CVPR 18
+http://openaccess.thecvf.com/content_cvpr_2018/papers/Zhang_Residual_Dense_Network_CVPR_2018_paper.pdf
+
+
+
+### 記事
 - 続・GANによる二次元美少女画像生成[2]
 https://medium.com/@crosssceneofwindff/%E7%B6%9A-gan%E3%81%AB%E3%82%88%E3%82%8B%E4%BA%8C%E6%AC%A1%E5%85%83%E7%BE%8E%E5%B0%91%E5%A5%B3%E7%94%BB%E5%83%8F%E7%94%9F%E6%88%90-a32fbe808eb0
 
