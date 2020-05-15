@@ -84,17 +84,24 @@ smaller initialization
 
 ### Paper
 - SRGAN: Training Dataset Matters[1]
+
 https://arxiv.org/abs/1903.09922
 
 - ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks
+
 https://arxiv.org/abs/1809.00219
 
 - ESRGAN+ : Further Improving Enhanced Super-Resolution Generative Adversarial Network
+
 https://arxiv.org/abs/2001.08073
 
 - Residual Dense Network for Image Super-Resolution, CVPR 18
+
 http://openaccess.thecvf.com/content_cvpr_2018/papers/Zhang_Residual_Dense_Network_CVPR_2018_paper.pdf
 
+- SRCNN
+
+- 
 
 
 
