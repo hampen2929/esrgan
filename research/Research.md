@@ -108,8 +108,6 @@ http://openaccess.thecvf.com/content_cvpr_2018/papers/Zhang_Residual_Dense_Netwo
 https://arxiv.org/abs/1807.00734
 
 
-
-
 ### 記事
 - 続・GANによる二次元美少女画像生成[2]
 https://medium.com/@crosssceneofwindff/%E7%B6%9A-gan%E3%81%AB%E3%82%88%E3%82%8B%E4%BA%8C%E6%AC%A1%E5%85%83%E7%BE%8E%E5%B0%91%E5%A5%B3%E7%94%BB%E5%83%8F%E7%94%9F%E6%88%90-a32fbe808eb0
@@ -124,7 +122,9 @@ https://buildersbox.corp-sansan.com/entry/2019/04/29/110000
 https://arxiv.org/pdf/1903.09922.pdf
 
 
+- RelativisticGANの論文を読んでPytorchで実装した　その1
 
+http://owatank.hatenablog.com/entry/2018/09/24/000938
 
 - [2]
 https://gigazine.net/news/20200205-deep-learning-4k-oldist-movie/?fbclid=IwAR2cPhnJCiLn8NZHEvhLTGYllptvvFHpEvQ9CZR8BoSGlGfUa_3rkb3k1WE
