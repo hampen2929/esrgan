@@ -103,6 +103,11 @@ http://openaccess.thecvf.com/content_cvpr_2018/papers/Zhang_Residual_Dense_Netwo
 
 - 
 
+- The relativistic discriminator: a key element missing from standard GAN
+
+https://arxiv.org/abs/1807.00734
+
+
 
 
 ### 記事
@@ -117,8 +122,6 @@ https://buildersbox.corp-sansan.com/entry/2019/04/29/110000
 
 - SRGAN: Training Dataset Matters [5]
 https://arxiv.org/pdf/1903.09922.pdf
-
-- 
 
 
 
