@@ -28,11 +28,7 @@ python esrgan.ipynb
 
 # Result
 
-![image](https://user-images.githubusercontent.com/34574033/82691642-2ef5a000-9c99-11ea-9b56-504e95c54b43.png)
-
-![000024050](https://user-images.githubusercontent.com/34574033/82691665-3cab2580-9c99-11ea-838e-9034ebd06994.png)
-
-![0000656](https://user-images.githubusercontent.com/34574033/82691949-bcd18b00-9c99-11ea-91d5-44726606be4b.jpg)
+![image](https://user-images.githubusercontent.com/34574033/82692272-6749ae00-9c9a-11ea-96ae-e157b1cabef9.png)
 
 =========== 以下 memo ===========
 
