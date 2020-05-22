@@ -26,6 +26,14 @@ cat_image_process.ipynb
 
 python esrgan.ipynb
 
+# Result
+
+![image](https://user-images.githubusercontent.com/34574033/82691642-2ef5a000-9c99-11ea-9b56-504e95c54b43.png)
+
+![000024050](https://user-images.githubusercontent.com/34574033/82691665-3cab2580-9c99-11ea-838e-9034ebd06994.png)
+
+
+
 =========== 以下 memo ===========
 
 ```
