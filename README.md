@@ -30,6 +30,9 @@ python esrgan.ipynb
 
 ![image](https://user-images.githubusercontent.com/34574033/82692272-6749ae00-9c9a-11ea-96ae-e157b1cabef9.png)
 
+![image](https://user-images.githubusercontent.com/34574033/82693130-e8ee0b80-9c9b-11ea-98f6-c75812f5902d.png)
+
+
 =========== 以下 memo ===========
 
 ```
