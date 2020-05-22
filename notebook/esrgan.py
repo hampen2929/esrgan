@@ -293,10 +293,11 @@ weight_dir = osp.join(ROOT, 'weight')
 image_train_save_dir = osp.join(output_dir, 'image', 'train')
 image_test_save_dir = osp.join(output_dir, 'image', 'test')
 weight_save_dir = osp.join(output_dir, 'weight')
+plot_save_dir = osp.join(output_dir, 'plot')
 
-os.makedirs(image_train_save_dir, exist_ok=True)
-os.makedirs(image_test_save_dir, exist_ok=True)
-os.makedirs(weight_save_dir, exist_ok=True)
+save_dirs = [image_train_save_dir, image_test_save_dir, weight_save_dir, plot_save_dir]
+for save_dir in save_dirs:
+    os.makedirs(save_dir, exist_ok=True)
 # -
 
 train_data_dir = osp.join(input_dir, '{}_train'.format(opt.dataset_name))
@@ -353,14 +354,6 @@ test_dataloader = DataLoader(
     shuffle=False,
     num_workers=opt.n_cpu,
 )
-
-# +
-# test_dataloader = DataLoader(
-#     TestImageDataset('../input/sample/'),
-#     batch_size=1,
-#     shuffle=False,
-#     num_workers=opt.n_cpu,
-# )
 # -
 
 # # main
@@ -489,22 +482,26 @@ for epoch in range(1, opt.n_epoch + 1):
             low_image_save = True
                     
 
-        if batches_done % opt.checkpoint_interval == 0:            
+        if batches_done % opt.checkpoint_interval == 0:
             # Save model checkpoints
             torch.save(generator.state_dict(), osp.join(weight_save_dir, "generator_%d.pth" % batches_done))
             torch.save(discriminator.state_dict(), osp.join(weight_save_dir, "discriminator_%d.pth" % batches_done))
         
-        log_df = pd.DataFrame(train_infos)
-        log_df = log_df.set_index('batch_num')
-        cols = log_df.columns[log_df.columns.isin(loss_names)]
-        log_df = log_df[cols]
-                
-        for num, loss_name in enumerate(log_df.columns, 1):
-            plt.subplot(2, 3, num)
-            plt.plot(log_df.index.values, log_df[loss_name].values, marker='o', color='b')
-            plt.title(loss_name)
-        
-        display.clear_output(wait=True)
-        display.display(plt.gcf())
+            log_df = pd.DataFrame(train_infos)
+            log_df = log_df.set_index('batch_num')
+            cols = log_df.columns[log_df.columns.isin(loss_names)]
+            log_df = log_df[cols]
+
+            for num, loss_name in enumerate(log_df.columns, 1):
+                plt.subplot(2, 3, num)
+                plt.plot(log_df.index.values, log_df[loss_name].values, marker='o', color='b', alpha=0.8)
+                plt.title(loss_name)
+
+            plt.savefig(osp.join(plot_save_dir, "plot.png"))
+
+            # display.clear_output(wait=True)
+            # display.display(plt.gcf())
 # -
+
+
 
