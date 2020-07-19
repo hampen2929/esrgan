@@ -158,7 +158,8 @@ https://confit.atlas.jp/guide/event-img/jsai2018/3A1-03/public/pdf?type=in
 
 https://arxiv.org/abs/1809.00219
 
-
+- SRGAN の 3 次元モデル超解像への拡張
+http://cvlab.cs.miyazaki-u.ac.jp/laboratory/2018/oka_honbun.pdf- 
 
 https://github.com/PacktPublishing/Hands-On-Generative-Adversarial-Networks-with-PyTorch-1.x
 
