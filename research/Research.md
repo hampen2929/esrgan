@@ -163,4 +163,6 @@ http://cvlab.cs.miyazaki-u.ac.jp/laboratory/2018/oka_honbun.pdf-
 
 https://github.com/PacktPublishing/Hands-On-Generative-Adversarial-Networks-with-PyTorch-1.x
 
+- ESRGAN: Enhanced Super-Resolution Generative	Adversarial	Networks
 
+https://www.jasongt.com/projects/ESRGAN.pdf
