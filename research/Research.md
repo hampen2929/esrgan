@@ -107,6 +107,12 @@ http://openaccess.thecvf.com/content_cvpr_2018/papers/Zhang_Residual_Dense_Netwo
 
 https://arxiv.org/abs/1807.00734
 
+- Real-World Super-Resolution via Kernel Estimation and Noise Injection
+
+https://openaccess.thecvf.com/content_CVPRW_2020/papers/w31/Ji_Real-World_Super-Resolution_via_Kernel_Estimation_and_Noise_Injection_CVPRW_2020_paper.pdf
+
+https://github.com/jixiaozhong/RealSR
+
 
 ### 記事
 - 続・GANによる二次元美少女画像生成[2]
@@ -152,8 +158,11 @@ https://confit.atlas.jp/guide/event-img/jsai2018/3A1-03/public/pdf?type=in
 
 https://arxiv.org/abs/1809.00219
 
-
+- SRGAN の 3 次元モデル超解像への拡張
+http://cvlab.cs.miyazaki-u.ac.jp/laboratory/2018/oka_honbun.pdf- 
 
 https://github.com/PacktPublishing/Hands-On-Generative-Adversarial-Networks-with-PyTorch-1.x
 
+- ESRGAN: Enhanced Super-Resolution Generative	Adversarial	Networks
 
+https://www.jasongt.com/projects/ESRGAN.pdf
