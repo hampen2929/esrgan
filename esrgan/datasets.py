@@ -1,11 +1,9 @@
 import glob
-import random
-import os
 import numpy as np
+from PIL import Image
 
 import torch
 from torch.utils.data import Dataset
-from PIL import Image
 import torchvision.transforms as transforms
 
 # Normalization parameters for pre-trained PyTorch models
