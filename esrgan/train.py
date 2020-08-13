@@ -116,7 +116,7 @@ train_dataloader = DataLoader(
 
 test_dataloader = DataLoader(
     ImageDataset(test_data_path, hr_shape=hr_shape),
-    batch_size=opt.batch_size,
+    batch_size=1,
     shuffle=False,
     num_workers=opt.n_cpu,
 )
@@ -200,17 +200,27 @@ for epoch in range(opt.epoch + 1, opt.n_epochs + 1):
             #  Log Progress
             # --------------                    
 
-            log_info = "[Epoch {}/{}] [Batch {}/{}] [D loss: {}] [G loss: {}, content: {}, adv: {}, pixel: {}]".format(
-                    epoch,
-                    opt.n_epochs,
-                    batch_num,
-                    len(train_dataloader),
-                    loss_D.item(),
-                    loss_G.item(),
-                    loss_content.item(),
-                    loss_GAN.item(),
-                    loss_pixel.item(),
-                )
+#             log_info = "[Epoch {}/{}] [Batch {}/{}] [D loss: {}] [G loss: {}, content: {}, adv: {}, pixel: {}]".format(
+#                     epoch,
+#                     opt.n_epochs,
+#                     batch_num,
+#                     len(train_dataloader),
+#                     loss_D.item(),
+#                     loss_G.item(),
+#                     loss_content.item(),
+#                     loss_GAN.item(),
+#                     loss_pixel.item(),
+#                 )
+
+            log_info = {
+                'epoch': epoch,
+                'batch': batch_num,
+                'D_loss': loss_D.item(),
+                'G_loss': loss_G.item(),
+                'content': loss_content.item(),
+                'adv': loss_GAN.item(), 
+                'pixel': loss_pixel.item(),
+            }
 
             if batch_num == 1:
                 sys.stdout.write("\n{}".format(log_info))
