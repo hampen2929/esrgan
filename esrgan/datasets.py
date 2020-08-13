@@ -48,3 +48,27 @@ class ImageDataset(Dataset):
 
     def __len__(self):
         return len(self.files)
+
+
+class DemoImageDataset(Dataset):
+    def __init__(self, root):
+        # Transforms for low resolution images and high resolution images
+        self.transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std),
+            ]
+        )
+
+        self.files = sorted(glob.glob(root + "/*.*"))
+
+    def __getitem__(self, index):
+        img = Image.open(self.files[index % len(self.files)])
+        img_trs = self.transform(img)
+
+        return {"img": img_trs}
+
+    def __len__(self):
+        return len(self.files)
+
+

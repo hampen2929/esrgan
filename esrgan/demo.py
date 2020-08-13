@@ -12,14 +12,23 @@ import torch
 from torchvision.utils import save_image
 
 from models import GeneratorRRDB, Discriminator, FeatureExtractor
-from datasets import ImageDataset, denormalize
+from datasets import DemoImageDataset, denormalize
 
 ROOT = '../'
 
-demo_in_dir = osp.join(ROOT, 'input', 'cat_dataset', 'demo')
-demo_out_dir = osp.join(ROOT, 'output', 'cat_dataset')
+dataset_name = 'cat_face'
+
+# +
+demo_in_dir = osp.join(ROOT, 'input', dataset_name, 'demo')
+demo_out_dir = osp.join(ROOT, 'output', dataset_name)
+
+demo_in_dir = '/workspace/demo/input'
+demo_out_dir = '/workspace/demo/output'
+# -
 
 os.makedirs(demo_out_dir, exist_ok=True)
+
+weight_path = "/workspace/output/cat_face/weight/generator_3900.pth"
 
 
 # parser = argparse.ArgumentParser()
@@ -52,7 +61,7 @@ class Opt():
         self.lr = 0.0002
         self.b1 = 0.9
         self.b2 = 0.999
-        self.batch_size = 4
+        self.batch_size = 1
         self.n_cpu = 8
         self.n_epoch = 200
         # opt.warmup_batches = 500
@@ -79,13 +88,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 hr_shape = (opt.hr_height, opt.hr_width)
 
+# +
 # Initialize generator and discriminator
 generator = GeneratorRRDB(opt.channels, filters=64, num_res_blocks=opt.residual_blocks).to(device)
-generator.load_state_dict(torch.load("saved_models/generator_%d.pth" % opt.epoch))
+generator.load_state_dict(torch.load(weight_path))
+
 Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.Tensor
+# -
 
 demo_dataloader = DataLoader(
-    ImageDataset(demo_in_dir, hr_shape=hr_shape),
+    DemoImageDataset(demo_in_dir),
     batch_size=opt.batch_size,
     shuffle=False,
     num_workers=opt.n_cpu,
@@ -100,18 +112,13 @@ demo_dataloader = DataLoader(
 with torch.no_grad():
     for i, imgs in enumerate(demo_dataloader):
         # Save image grid with upsampled inputs and outputs
-        imgs_lr = Variable(imgs["lr"].type(Tensor))
-        gen_hr = generator(imgs_lr)
-        imgs_lr = nn.functional.interpolate(imgs_lr, scale_factor=4)
-        
-        imgs_lr = denormalize(imgs_lr)
+        img = Variable(imgs["img"].type(Tensor))
+        gen_hr = generator(img)
         gen_hr = denormalize(gen_hr)
 
         image_test_batch_save_dir = osp.join(demo_out_dir, '{:03}'.format(i))
-        os.makedirs(osp.join(image_test_batch_save_dir, "low"), exist_ok=True)
         os.makedirs(osp.join(image_test_batch_save_dir, "high"), exist_ok=True)
 
-        save_image(imgs_lr, osp.join(image_test_batch_save_dir, "low", "{:09}.png".format(i)), nrow=1, normalize=False)
         save_image(gen_hr, osp.join(image_test_batch_save_dir, "high", "{:09}.png".format(i)), nrow=1, normalize=False)
 
         # # if i == 1:
@@ -123,3 +130,9 @@ with torch.no_grad():
 
         if i > 5:
             break
+
+image_test_batch_save_dir
+
+
+
+
