@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import glob
 import numpy as np
 from PIL import Image
@@ -53,20 +54,35 @@ class ImageDataset(Dataset):
 class DemoImageDataset(Dataset):
     def __init__(self, root):
         # Transforms for low resolution images and high resolution images
-        self.transform = transforms.Compose(
+        self.hr_transform = transforms.Compose(
             [
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
         )
-
+        
         self.files = sorted(glob.glob(root + "/*.*"))
-
+    
+    def lr_transform(self, img, hr_height):
+        """
+        いろんなサイズの画像に対応するために毎回self.__lr_transformを定義している。
+        """
+        self.__lr_transform = transforms.Compose(
+            [
+                transforms.Resize((hr_height // 4, hr_height // 4), Image.BICUBIC),
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std),
+            ]
+        )
+        return self.__lr_transform(img)
+    
     def __getitem__(self, index):
         img = Image.open(self.files[index % len(self.files)])
-        img_trs = self.transform(img)
+        hr_height, _ = img.size
+        img_lr = self.lr_transform(img, hr_height)
+        img_hr = self.hr_transform(img)
 
-        return {"img": img_trs}
+        return {"lr": img_lr, "hr": img_hr}
 
     def __len__(self):
         return len(self.files)
